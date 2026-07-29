@@ -76,4 +76,4 @@ If you are on Android 14 or a recent Android 13 device, you can completely disab
 *(Note: If you are on an older Android 12/12L/13 device that does not have this toggle, you will need to use ADB commands to disable the Phantom Process Killer. Search "Termux ADB disable phantom process" for guides specific to your device).*
 
 ## License
-MIT
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Any derivatives or modifications of this project must also be open-source and distributed under the same license.
