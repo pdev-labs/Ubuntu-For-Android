@@ -136,7 +136,7 @@ install_linux() {
     pkg update -y && pkg upgrade -y
     
     echo "[*] Installing dependencies..."
-    pkg install proot-distro pulseaudio -y
+    pkg install proot-distro pulseaudio wget -y
     
     if [ "$SERVER" == "x11" ]; then
         pkg install x11-repo -y
@@ -148,6 +148,12 @@ install_linux() {
     
     ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO"
     SETUP_SCRIPT="$ROOTFS/root/gui_setup.sh"
+    
+    if [ "$DE" != "none" ]; then
+        echo "[*] Setting up Universal Wallpaper..."
+        mkdir -p "$ROOTFS/usr/share/backgrounds"
+        wget -qO "$ROOTFS/usr/share/backgrounds/default.jpg" "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ubuntu_10.04_LTS_default_wallpaper.jpg/1280px-Ubuntu_10.04_LTS_default_wallpaper.jpg" || true
+    fi
     
     # Configure package manager mapping
     case "$DISTRO" in
@@ -238,6 +244,7 @@ cat << 'STARTUP' > ~/.vnc/xstartup
 #!/bin/sh
 export PULSE_SERVER=127.0.0.1
 startxfce4 &
+(sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &
 STARTUP
 chmod +x ~/.vnc/xstartup
 EOF
@@ -247,6 +254,7 @@ cat << 'STARTUP' > ~/.vnc/xstartup
 #!/bin/sh
 export PULSE_SERVER=127.0.0.1
 startlxde &
+(sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &
 STARTUP
 chmod +x ~/.vnc/xstartup
 EOF
@@ -268,8 +276,16 @@ echo "Starting Termux:X11..."
 termux-x11 :1 &
 sleep 2
 echo "Starting $DISTRO..."
-proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; start${DE} &"
 EOF
+        if [ "$DE" == "xfce4" ]; then
+            cat << EOF >> $PREFIX/bin/start-linux
+proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
+EOF
+        elif [ "$DE" == "lxde" ]; then
+            cat << EOF >> $PREFIX/bin/start-linux
+proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
+EOF
+        fi
     elif [ "$SERVER" == "vnc" ]; then
         cat << EOF >> $PREFIX/bin/start-linux
 echo "Starting VNC Server..."
