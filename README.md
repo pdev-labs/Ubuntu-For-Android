@@ -1,16 +1,19 @@
 # Linux for Android (Termux) Manager
 
-A fully automated, interactive bash script to install, manage, backup, update, and configure **Ubuntu, Debian, Arch Linux, Fedora, OpenSUSE, or Void Linux** on Android using Termux and `proot-distro`.
+A fully automated, interactive bash script to install, manage, backup, share, update, and configure **Ubuntu, Debian, Arch Linux, Fedora, OpenSUSE, or Void Linux** on Android using Termux and `proot-distro`.
 
 ## The Ultimate Features
 - **Multi-Distribution Support:** Choose your favorite flavor of Linux! The script automatically handles the different package managers (apt, pacman, dnf, zypper, xbps).
 - **True Linux Experience (Sudo):** Unlike standard Termux environments, this installer sets up a proper non-root user (`user`) with `sudo` privileges. You must use `sudo` to install packages, just like a real PC!
+- **Portable Export & Import (Share with Friends!):** Easily export your fully customized Linux OS as a `.tar.gz` file into your Android `Downloads` folder to share with friends. They can place the file in their `Downloads` folder and use the new "Import" button to instantly copy your exact setup!
+- **Dynamic Display Settings:** When installing with VNC, you can now dynamically pick your screen resolution and UI scaling (Auto, 720p, 1080p, or Tablet size) to perfectly fit your device.
 - **VirGL Hardware Acceleration:** Automatically installs and starts `virglrenderer-android`, passing 3D OpenGL rendering directly to your phone's physical GPU for incredibly smooth graphics.
 - **Home-Screen Widgets:** Automatically generates a `Start-Linux` shortcut. If you use the `Termux:Widget` Android app, you can launch your Linux desktop with one tap straight from your phone's home screen!
 - **1-Click Universal Updater:** Never type `apt update` again! The Manager Menu includes an option to automatically detect your distro and update it in the background.
+- **System Dashboard:** Instantly view your Android phone's RAM availability, Termux storage consumption, and CPU architecture right from the manager menu!
+- **Advanced Audio Fixer:** A built-in debugger that dynamically restarts PulseAudio and forcefully binds it to TCP protocols to instantly resolve any audio crackling issues on problematic devices.
 - **Instant SSH Server:** Start a native SSH server on port 8022 directly from the Manager Menu, allowing you to seamlessly remote into your phone from your PC.
 - **Hardware Acceleration (Termux:X11):** Offers a choice between VNC (software rendering) and Termux:X11 for a much smoother, hardware-accelerated desktop experience.
-- **Audio Support:** Automatically installs and configures PulseAudio so you can hear sound from your Linux environment.
 
 ## Installation
 
@@ -26,7 +29,7 @@ A fully automated, interactive bash script to install, manage, backup, update, a
 
 ## Usage
 
-When you run `./install_linux.sh`, it will launch a Manager Menu where you can Install, Update, SSH, Backup, Restore, or Uninstall any supported distribution.
+When you run `./install_linux.sh`, it will launch a Manager Menu where you can Install, Update, SSH, view the Dashboard, Export, Import, Backup, Restore, or Uninstall any supported distribution.
 
 **To Start Linux:**
 Just type this anywhere in Termux:

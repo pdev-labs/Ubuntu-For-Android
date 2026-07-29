@@ -16,20 +16,28 @@ show_menu() {
     echo "1) Install / Re-install Linux Distro"
     echo "2) Update a Distro (1-Click Updater)"
     echo "3) Start SSH Server"
-    echo "4) Backup a Distro"
-    echo "5) Restore a Distro"
-    echo "6) Uninstall a Distro"
-    echo "7) Exit"
+    echo "4) System Dashboard"
+    echo "5) Audio Debugger / Fixer"
+    echo "6) Backup a Distro (Internal)"
+    echo "7) Restore a Distro (Internal)"
+    echo "8) Export Distro (Share to Downloads)"
+    echo "9) Import Shared Distro"
+    echo "10) Uninstall a Distro"
+    echo "11) Exit"
     echo "========================================="
-    read -p "Select an option [1-7]: " OPTION
+    read -p "Select an option [1-11]: " OPTION
     case $OPTION in
         1) install_linux ;;
         2) update_linux ;;
         3) start_ssh ;;
-        4) backup_linux ;;
-        5) restore_linux ;;
-        6) uninstall_linux ;;
-        7) exit 0 ;;
+        4) system_dashboard ;;
+        5) audio_fixer ;;
+        6) backup_linux ;;
+        7) restore_linux ;;
+        8) export_distro ;;
+        9) import_distro ;;
+        10) uninstall_linux ;;
+        11) exit 0 ;;
         *) echo "Invalid option"; sleep 1; show_menu ;;
     esac
 }
@@ -53,6 +61,36 @@ get_distro_choice() {
         6) DISTRO="void";;
         *) echo "Invalid choice"; exit 1 ;;
     esac
+}
+
+system_dashboard() {
+    clear
+    echo "========================================="
+    echo "         SYSTEM DASHBOARD                "
+    echo "========================================="
+    echo "OS Architecture: $(uname -m)"
+    echo "-----------------------------------------"
+    echo "Android Memory (RAM) Usage:"
+    free -m || echo "Memory stats unavailable."
+    echo "-----------------------------------------"
+    echo "Termux Storage Usage (Total Size):"
+    du -sh $PREFIX 2>/dev/null | awk '{print $1}'
+    echo "-----------------------------------------"
+    echo "Available Phone Storage:"
+    df -h /data | awk 'NR==2 {print $4}'
+    echo "========================================="
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+audio_fixer() {
+    echo "[*] Restarting PulseAudio and clearing sockets..."
+    pulseaudio -k 2>/dev/null || true
+    rm -rf /data/data/com.termux/files/usr/tmp/pulse-* 2>/dev/null || true
+    pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
+    echo "Audio server forcefully bound to TCP protocol!"
+    read -p "Press Enter to continue..."
+    show_menu
 }
 
 update_linux() {
@@ -93,7 +131,7 @@ start_ssh() {
 
 backup_linux() {
     get_distro_choice
-    echo "[*] Backing up $DISTRO..."
+    echo "[*] Backing up $DISTRO (Internal)..."
     proot-distro backup "$DISTRO" --output ~/${DISTRO}-backup.tar.gz
     echo "Backup saved to ~/${DISTRO}-backup.tar.gz"
     read -p "Press Enter to continue..."
@@ -103,13 +141,55 @@ backup_linux() {
 restore_linux() {
     get_distro_choice
     if [ ! -f ~/${DISTRO}-backup.tar.gz ]; then
-        echo "Error: No backup found at ~/${DISTRO}-backup.tar.gz"
+        echo "Error: No internal backup found at ~/${DISTRO}-backup.tar.gz"
     else
         echo "[*] Restoring $DISTRO..."
         read -p "Are you sure? This overwrites current data [y/N]: " CONFIRM
         if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
             proot-distro restore "$DISTRO" --input ~/${DISTRO}-backup.tar.gz
             echo "Restore complete!"
+        fi
+    fi
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+export_distro() {
+    get_distro_choice
+    echo "[*] Requesting Android Storage Permission..."
+    termux-setup-storage || true
+    sleep 2
+    mkdir -p ~/storage/downloads/
+    echo "[*] Exporting $DISTRO to Android Downloads folder (This may take a while)..."
+    proot-distro backup "$DISTRO" --output ~/storage/downloads/${DISTRO}-shared.tar.gz
+    echo "========================================="
+    echo "Export Complete!"
+    echo "File saved to: Downloads/${DISTRO}-shared.tar.gz"
+    echo "You can now share this file with your friends via Google Drive or USB!"
+    echo "========================================="
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+import_distro() {
+    get_distro_choice
+    echo "[*] Requesting Android Storage Permission..."
+    termux-setup-storage || true
+    sleep 2
+    if [ ! -f ~/storage/downloads/${DISTRO}-shared.tar.gz ]; then
+        echo "========================================="
+        echo "Error: No shared file found!"
+        echo "Make sure your friend's file is named exactly '${DISTRO}-shared.tar.gz'"
+        echo "and is placed inside your phone's 'Downloads' folder."
+        echo "========================================="
+    else
+        echo "[*] Importing $DISTRO from Downloads..."
+        read -p "Are you sure? This will completely overwrite any current $DISTRO installation [y/N]: " CONFIRM
+        if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+            proot-distro restore "$DISTRO" --input ~/storage/downloads/${DISTRO}-shared.tar.gz
+            echo "========================================="
+            echo "Import complete! You can now use start-linux to boot your friend's setup."
+            echo "========================================="
         fi
     fi
     read -p "Press Enter to continue..."
@@ -144,6 +224,7 @@ install_linux() {
     
     DE="none"
     SERVER="none"
+    RESOLUTION="1280x720"
     
     echo ""
     echo "Choose Desktop Environment:"
@@ -160,6 +241,16 @@ install_linux() {
         echo "2) VNC (Software Rendering, Slower)"
         read -p "Select Server [1-2]: " SRV_CHOICE
         if [ "$SRV_CHOICE" == "1" ]; then SERVER="x11"; else SERVER="vnc"; fi
+        
+        if [ "$SERVER" == "vnc" ]; then
+            echo ""
+            echo "Choose Display Resolution / UI Scaling:"
+            echo "1) Auto / 720p (Lightweight - Recommended)"
+            echo "2) 1080p (HD)"
+            echo "3) iPad / Tablet Ratio (1440x1080)"
+            read -p "Select Resolution [1-3]: " RES_CHOICE
+            if [ "$RES_CHOICE" == "2" ]; then RESOLUTION="1920x1080"; elif [ "$RES_CHOICE" == "3" ]; then RESOLUTION="1440x1080"; else RESOLUTION="1280x720"; fi
+        fi
     fi
 
     # SOFTWARE SELECTOR
@@ -289,6 +380,7 @@ install_linux() {
     mkdir -p "$ROOTFS/etc"
     echo "DE=\"$DE\"" > "$ROOTFS/etc/termux-linux-manager.conf"
     echo "SERVER=\"$SERVER\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
+    echo "RESOLUTION=\"$RESOLUTION\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
     echo "UPDATE_CMD=\"$UPDATE_CMD\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
     
     if [ "$DE" != "none" ]; then
@@ -317,7 +409,7 @@ $INSTALL_CMD $APT_PKGS
 EOF
     fi
 
-    # Install optional categories safely (so it doesn't break setup if a package is missing)
+    # Install optional categories safely
     if [ "$INSTALL_DEV" == "1" ]; then
         cat << EOF >> "$SETUP_SCRIPT"
 echo " -> Installing Development Tools..."
@@ -479,7 +571,8 @@ if [ "$SERVER" == "x11" ]; then
     fi
 elif [ "$SERVER" == "vnc" ]; then
     echo "Starting VNC Server..."
-    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export GALLIUM_DRIVER=virpipe; export MESA_GL_VERSION_OVERRIDE=4.0; vncserver -geometry 1280x720 :1"
+    if [ -z "$RESOLUTION" ]; then RESOLUTION="1280x720"; fi
+    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export GALLIUM_DRIVER=virpipe; export MESA_GL_VERSION_OVERRIDE=4.0; vncserver -geometry $RESOLUTION :1"
 else
     echo "Starting $DISTRO CLI as 'user'..."
     proot-distro login $DISTRO --user user --shared-tmp
