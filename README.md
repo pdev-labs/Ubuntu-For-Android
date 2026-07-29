@@ -1,12 +1,15 @@
-# Ubuntu for Android (Termux)
+# Ubuntu for Android (Termux) Manager
 
-A fully automated, interactive bash script to install and configure Ubuntu on Android using Termux and `proot-distro`.
+A fully automated, interactive bash script to install, manage, backup, and configure Ubuntu on Android using Termux and `proot-distro`.
 
-## Features
+## Advanced Features
 - **No Root Required:** Runs entirely in user space within Termux.
-- **Interactive Wizard:** Choose between automatic presets or build a custom setup.
-- **Graphical Desktop (GUI):** Automatically installs and configures XFCE4 or LXDE, TigerVNC, and the classic Ubuntu wallpaper.
-- **Custom Packages:** Specify any extra Ubuntu packages you want installed right out of the box.
+- **Hardware Acceleration (Termux:X11):** Offers a choice between VNC (software rendering) and Termux:X11 for a much smoother, hardware-accelerated desktop experience.
+- **Audio Support:** Automatically installs and configures PulseAudio so you can hear sound from your Ubuntu environment.
+- **Quick-Launch Commands:** Automatically generates `start-ubuntu` and `stop-ubuntu` commands. You can type them anywhere in Termux to boot up or shut down your desktop!
+- **Backup & Restore:** Built-in menu options to backup your entire Ubuntu system to your internal storage, and restore it later.
+- **Uninstaller:** Easily delete the Ubuntu environment to free up space with a single button.
+- **SD Card Access:** Automatically links your phone's internal storage directly into `/root/storage` in Ubuntu.
 
 ## Installation
 
@@ -14,27 +17,29 @@ A fully automated, interactive bash script to install and configure Ubuntu on An
 2. Download and run the script:
    ```bash
    pkg update -y && pkg install git -y
-   git clone https://github.com/pdev-labs/ubuntu-for-android.git
-   cd ubuntu-for-android
+   git clone https://github.com/pdev-labs/Ubuntu-For-Android.git
+   cd Ubuntu-For-Android
    chmod +x install_ubuntu.sh
    ./install_ubuntu.sh
    ```
 
 ## Usage
 
-After installation, if you chose to install a GUI desktop:
-1. Start the VNC server using the command provided at the end of the installation (e.g., `proot-distro login ubuntu -- vncserver -geometry 1280x720 :1`).
-2. Open a VNC Viewer app on your Android device (like RealVNC or bVNC).
-3. Connect to `127.0.0.1:5901` with the default password `ubuntu`.
+When you run `./install_ubuntu.sh`, it will launch a Manager Menu where you can Install, Backup, Restore, or Uninstall.
 
-To stop the desktop, run:
+After you have installed Ubuntu through the manager, you never have to run the long startup commands manually again.
+
+**To Start Ubuntu:**
+Just type this anywhere in Termux:
 ```bash
-proot-distro login ubuntu -- vncserver -kill :1
+start-ubuntu
 ```
+*(Then, open your VNC Viewer or Termux:X11 app depending on what you chose during installation).*
 
-If you installed the Minimal (CLI) version, simply run:
+**To Stop Ubuntu:**
+Just type this anywhere in Termux:
 ```bash
-proot-distro login ubuntu
+stop-ubuntu
 ```
 
 ## License
