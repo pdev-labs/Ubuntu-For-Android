@@ -47,7 +47,7 @@ get_distro_choice() {
     echo "Choose Linux Distribution:"
     echo "1) Ubuntu (apt)"
     echo "2) Debian (apt)"
-    echo "3) Arch Linux (pacman)"
+    echo "3) Kali Linux (apt)"
     echo "4) Fedora (dnf)"
     echo "5) OpenSUSE (zypper)"
     echo "6) Void Linux (xbps)"
@@ -55,7 +55,7 @@ get_distro_choice() {
     case $DIST_CHOICE in
         1) DISTRO="ubuntu";;
         2) DISTRO="debian";;
-        3) DISTRO="archlinux";;
+        3) DISTRO="kali";;
         4) DISTRO="fedora";;
         5) DISTRO="opensuse";;
         6) DISTRO="void";;
@@ -309,7 +309,7 @@ install_linux() {
     
     # Configure package manager mapping
     case "$DISTRO" in
-        ubuntu|debian)
+        ubuntu|debian|kali)
             UPDATE_CMD="apt-get update -y && apt-get upgrade -y"
             INSTALL_CMD="apt-get install -y"
             XFCE_PKG="xfce4 xfce4-goodies dbus-x11"
@@ -322,19 +322,7 @@ install_linux() {
             MEDIA_PKG="vlc gimp"
             UTILS_PKG="htop neofetch"
             ;;
-        archlinux)
-            UPDATE_CMD="pacman -Syu --noconfirm"
-            INSTALL_CMD="pacman -S --noconfirm"
-            XFCE_PKG="xfce4 xfce4-goodies dbus"
-            LXDE_PKG="lxde dbus"
-            VNC_PKG="tigervnc expect"
-            SUDO_PKG="sudo"
-            DEV_PKG="python git curl wget nodejs"
-            WEB_PKG="firefox chromium"
-            OFFICE_PKG="libreoffice-fresh"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
-            ;;
+
         fedora)
             UPDATE_CMD="dnf update -y"
             INSTALL_CMD="dnf install -y"

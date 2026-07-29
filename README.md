@@ -26,7 +26,7 @@ Turning your Android device into a full-fledged Linux workstation has never been
 Currently supported distributions:
 - **Ubuntu** (apt)
 - **Debian** (apt)
-- **Arch Linux** (pacman)
+- **Kali Linux** (apt)
 - **Fedora** (dnf)
 - **OpenSUSE** (zypper)
 - **Void Linux** (xbps)
