@@ -61,8 +61,8 @@ Copy and paste this snippet into your Termux terminal:
 
 ```bash
 pkg update -y && pkg install git -y
-git clone https://github.com/pdev-labs/Ubuntu-For-Android.git
-cd Ubuntu-For-Android
+git clone https://github.com/pdev-labs/Linux-For-Android.git
+cd Linux-For-Android
 chmod +x install_linux.sh
 ./install_linux.sh
 ```
