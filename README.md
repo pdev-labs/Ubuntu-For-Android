@@ -42,5 +42,32 @@ Just type this anywhere in Termux:
 stop-ubuntu
 ```
 
+## ⚠️ Troubleshooting: Phantom Process Killer (Android 12+)
+
+Starting in Android 12, the Android operating system aggressively limits the number of child processes an app can run in the background. Because a full Linux desktop environment requires many concurrent processes, Android may suddenly kill Termux while you are using Ubuntu.
+
+### How to check if you are affected
+If you are affected by this issue, Termux will abruptly close while you are working in your Ubuntu GUI, and when you re-open Termux, you will see this error message in the terminal:
+> `[Process completed (signal 9) - press Enter]`
+
+### How to Fix (Android 14 and newer)
+If you are on Android 14 or a recent Android 13 device, you can completely disable this restriction natively from the Developer Options.
+
+**Step 1: Enable Developer Options**
+1. Open your device **Settings**.
+2. Scroll down and tap on **About phone**.
+3. Find the **Build number** entry (on some devices, it's under 'Software information').
+4. Tap the **Build number** quickly 7 times in a row.
+5. Enter your lock screen PIN when prompted. You should see a toast message saying "You are now a developer!".
+
+**Step 2: Disable Child Process Restrictions**
+1. Go back to the main **Settings** menu.
+2. Tap on **System** (or scroll to the very bottom) and open **Developer options**.
+3. Scroll down the list until you find the toggle named **Disable child process restrictions**.
+4. Turn this toggle **ON**.
+5. Restart Termux. You will no longer experience signal 9 crashes!
+
+*(Note: If you are on an older Android 12/12L/13 device that does not have this toggle, you will need to use ADB commands to disable the Phantom Process Killer. Search "Termux ADB disable phantom process" for guides specific to your device).*
+
 ## License
 MIT
