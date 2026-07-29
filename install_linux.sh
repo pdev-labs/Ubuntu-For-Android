@@ -307,6 +307,7 @@ install_linux() {
     proot-distro install "$DISTRO"
     
     ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO"
+    mkdir -p "$ROOTFS/root"
     SETUP_SCRIPT="$ROOTFS/root/gui_setup.sh"
     
     # Configure package manager mapping
