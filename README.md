@@ -4,13 +4,14 @@ A fully automated, interactive bash script to install, manage, backup, and confi
 
 ## Advanced Features
 - **Multi-Distribution Support:** Choose your favorite flavor of Linux! The script automatically handles the different package managers (apt, pacman, dnf, zypper, xbps).
-- **No Root Required:** Runs entirely in user space within Termux.
+- **True Linux Experience (Sudo):** Unlike standard Termux environments, this installer sets up a proper non-root user (`user`) with `sudo` privileges. You must use `sudo` to install packages, just like a real PC!
+- **Software Selector:** Easily select optional software categories (like Development tools or Web browsers) during installation.
 - **Hardware Acceleration (Termux:X11):** Offers a choice between VNC (software rendering) and Termux:X11 for a much smoother, hardware-accelerated desktop experience.
 - **Audio Support:** Automatically installs and configures PulseAudio so you can hear sound from your Linux environment.
 - **Quick-Launch Commands:** Automatically generates `start-linux` and `stop-linux` commands. You can type them anywhere in Termux to boot up or shut down your desktop!
 - **Backup & Restore:** Built-in menu options to backup your entire Linux system to your internal storage, and restore it later.
 - **Uninstaller:** Easily delete the Linux environment to free up space with a single button.
-- **SD Card Access:** Automatically links your phone's internal storage directly into `/root/storage` in Linux.
+- **SD Card Access:** Automatically links your phone's internal storage directly into `~/storage` in Linux.
 
 ## Installation
 
@@ -36,6 +37,10 @@ Just type this anywhere in Termux:
 start-linux
 ```
 *(Then, open your VNC Viewer or Termux:X11 app depending on what you chose during installation).*
+
+**Default Credentials:**
+- **Username:** `user`
+- **Sudo / VNC Password:** `ubuntu`
 
 **To Stop Linux:**
 Just type this anywhere in Termux:

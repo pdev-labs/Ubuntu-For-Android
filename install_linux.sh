@@ -122,6 +122,22 @@ install_linux() {
         read -p "Select Server [1-2]: " SRV_CHOICE
         if [ "$SRV_CHOICE" == "1" ]; then SERVER="x11"; else SERVER="vnc"; fi
     fi
+
+    # SOFTWARE SELECTOR
+    echo ""
+    echo "========================================="
+    echo "      Software Selector (Optional)       "
+    echo "========================================="
+    echo "Select categories to install popular apps:"
+    
+    INSTALL_DEV=0
+    INSTALL_WEB=0
+    
+    read -p "Install Development Tools? (Python, Git, VS Code/Codium) [y/N]: " DEV_CHOICE
+    if [[ "$DEV_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_DEV=1; fi
+    
+    read -p "Install Web Browsers? (Firefox) [y/N]: " WEB_CHOICE
+    if [[ "$WEB_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_WEB=1; fi
     
     echo ""
     echo "========================================="
@@ -163,6 +179,9 @@ install_linux() {
             XFCE_PKG="xfce4 xfce4-goodies dbus-x11"
             LXDE_PKG="lxde dbus-x11"
             VNC_PKG="tigervnc-standalone-server expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python3 git curl wget"
+            WEB_PKG="firefox"
             ;;
         archlinux)
             UPDATE_CMD="pacman -Syu --noconfirm"
@@ -170,6 +189,9 @@ install_linux() {
             XFCE_PKG="xfce4 xfce4-goodies dbus"
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python git curl wget code"
+            WEB_PKG="firefox"
             ;;
         fedora)
             UPDATE_CMD="dnf update -y"
@@ -177,6 +199,9 @@ install_linux() {
             XFCE_PKG="xfce4-session xfce4-panel xfdesktop xfwm4 dbus-x11"
             LXDE_PKG="lxde-common lxsession dbus-x11"
             VNC_PKG="tigervnc-server expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python3 git curl wget"
+            WEB_PKG="firefox"
             ;;
         opensuse)
             UPDATE_CMD="zypper refresh && zypper update -y"
@@ -184,6 +209,9 @@ install_linux() {
             XFCE_PKG="patterns-xfce-xfce dbus-1-x11"
             LXDE_PKG="patterns-lxde-lxde dbus-1-x11"
             VNC_PKG="tigervnc expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python3 git curl wget"
+            WEB_PKG="MozillaFirefox"
             ;;
         void)
             UPDATE_CMD="xbps-install -Syu"
@@ -191,6 +219,9 @@ install_linux() {
             XFCE_PKG="xfce4 dbus"
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python3 git curl wget"
+            WEB_PKG="firefox"
             ;;
     esac
     
@@ -201,34 +232,49 @@ echo " -> Updating repositories..."
 $UPDATE_CMD
 EOF
     
-    APT_PKGS=""
-    if [ "$DE" == "xfce4" ]; then APT_PKGS="$XFCE_PKG"; fi
-    if [ "$DE" == "lxde" ]; then APT_PKGS="$LXDE_PKG"; fi
+    APT_PKGS="$SUDO_PKG"
+    if [ "$DE" == "xfce4" ]; then APT_PKGS="$APT_PKGS $XFCE_PKG"; fi
+    if [ "$DE" == "lxde" ]; then APT_PKGS="$APT_PKGS $LXDE_PKG"; fi
     if [ "$SERVER" == "vnc" ]; then APT_PKGS="$APT_PKGS $VNC_PKG"; fi
+    if [ "$INSTALL_DEV" == "1" ]; then APT_PKGS="$APT_PKGS $DEV_PKG"; fi
+    if [ "$INSTALL_WEB" == "1" ]; then APT_PKGS="$APT_PKGS $WEB_PKG"; fi
     
     APT_PKGS=$(echo "$APT_PKGS" | xargs)
     
     if [ -n "$APT_PKGS" ]; then
         cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing desktop packages ($APT_PKGS)..."
+echo " -> Installing packages ($APT_PKGS)..."
 $INSTALL_CMD $APT_PKGS
 EOF
     fi
     
     cat << 'EOF' >> "$SETUP_SCRIPT"
+echo " -> Creating standard 'user' account with sudo privileges..."
+useradd -m -s /bin/bash user || true
+echo "user:ubuntu" | chpasswd
+echo "user ALL=(ALL) ALL" >> /etc/sudoers
+echo "root ALL=(ALL) ALL" >> /etc/sudoers
+
 echo " -> Linking Android Internal Storage..."
-mkdir -p /root/storage
+mkdir -p /home/user/storage
 if [ -d /data/data/com.termux/files/home/storage ]; then
-    ln -sf /data/data/com.termux/files/home/storage/* /root/storage/
+    ln -sf /data/data/com.termux/files/home/storage/* /home/user/storage/
 fi
+chown -R user:user /home/user/storage
 EOF
     
+    if [ "$INSTALL_DEV" == "1" ]; then
+        cat << 'EOF' >> "$SETUP_SCRIPT"
+echo "alias google-antigravity='echo \"Google Antigravity Activated! 🚀\"'" >> /home/user/.bashrc
+EOF
+    fi
+
     if [ "$SERVER" == "vnc" ]; then
         cat << 'EOF' >> "$SETUP_SCRIPT"
 echo " -> Configuring VNC Password (default: ubuntu)..."
-mkdir -p ~/.vnc
+mkdir -p /home/user/.vnc
 expect << 'EOD'
-spawn vncpasswd
+spawn vncpasswd /home/user/.vnc/passwd
 expect "Password:"
 send "ubuntu\r"
 expect "Verify:"
@@ -240,25 +286,27 @@ EOD
 EOF
         if [ "$DE" == "xfce4" ]; then
             cat << 'EOF' >> "$SETUP_SCRIPT"
-cat << 'STARTUP' > ~/.vnc/xstartup
+cat << 'STARTUP' > /home/user/.vnc/xstartup
 #!/bin/sh
 export PULSE_SERVER=127.0.0.1
 startxfce4 &
 (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &
 STARTUP
-chmod +x ~/.vnc/xstartup
 EOF
         elif [ "$DE" == "lxde" ]; then
             cat << 'EOF' >> "$SETUP_SCRIPT"
-cat << 'STARTUP' > ~/.vnc/xstartup
+cat << 'STARTUP' > /home/user/.vnc/xstartup
 #!/bin/sh
 export PULSE_SERVER=127.0.0.1
 startlxde &
 (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &
 STARTUP
-chmod +x ~/.vnc/xstartup
 EOF
         fi
+        cat << 'EOF' >> "$SETUP_SCRIPT"
+chmod +x /home/user/.vnc/xstartup
+chown -R user:user /home/user/.vnc
+EOF
     fi
     
     echo "[*] Executing setup inside $DISTRO (this will take a while)..."
@@ -275,26 +323,26 @@ EOF
 echo "Starting Termux:X11..."
 termux-x11 :1 &
 sleep 2
-echo "Starting $DISTRO..."
+echo "Starting $DISTRO as 'user'..."
 EOF
         if [ "$DE" == "xfce4" ]; then
             cat << EOF >> $PREFIX/bin/start-linux
-proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
+proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
 EOF
         elif [ "$DE" == "lxde" ]; then
             cat << EOF >> $PREFIX/bin/start-linux
-proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
+proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
 EOF
         fi
     elif [ "$SERVER" == "vnc" ]; then
         cat << EOF >> $PREFIX/bin/start-linux
 echo "Starting VNC Server..."
-proot-distro login $DISTRO --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; vncserver -geometry 1280x720 :1"
+proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; vncserver -geometry 1280x720 :1"
 EOF
     elif [ "$DE" == "none" ]; then
         cat << EOF >> $PREFIX/bin/start-linux
-echo "Starting $DISTRO CLI..."
-proot-distro login $DISTRO --shared-tmp
+echo "Starting $DISTRO CLI as 'user'..."
+proot-distro login $DISTRO --user user --shared-tmp
 EOF
     fi
     chmod +x $PREFIX/bin/start-linux
@@ -312,7 +360,7 @@ EOF
     elif [ "$SERVER" == "vnc" ]; then
         cat << EOF >> $PREFIX/bin/stop-linux
 echo "Stopping VNC Server..."
-proot-distro login $DISTRO --shared-tmp -- bash -c "vncserver -kill :1" 2>/dev/null || true
+proot-distro login $DISTRO --user user --shared-tmp -- bash -c "vncserver -kill :1" 2>/dev/null || true
 EOF
     fi
     chmod +x $PREFIX/bin/stop-linux
@@ -320,6 +368,8 @@ EOF
     echo ""
     echo "========================================="
     echo "Installation complete!"
+    echo "You are now running as a standard user."
+    echo "Password for sudo is: ubuntu"
     echo "Use commands: start-linux / stop-linux"
     echo "========================================="
     read -p "Press Enter to return to menu..."
