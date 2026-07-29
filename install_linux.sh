@@ -23,7 +23,7 @@ show_menu() {
     echo "8) Export Distro (Share to Downloads)"
     echo "9) Import Shared Distro"
     echo "10) Uninstall a Distro"
-    echo "11) Optimize Browser (Hardware Acceleration)"
+    echo "11) Toggle Browser Hardware Acceleration"
     echo "12) Exit"
     echo "========================================="
     read -p "Select an option [1-12]: " OPTION
@@ -202,8 +202,15 @@ import_distro() {
 
 optimize_browser() {
     get_distro_choice
-    echo "[*] Optimizing Chromium for Hardware Accelerated Video Decoding..."
-    proot-distro login "$DISTRO" -- bash -c '
+    echo ""
+    echo "Browser Optimization Menu:"
+    echo "1) Enable Hardware Acceleration (VirGL - Smooth YouTube)"
+    echo "2) Disable Hardware Acceleration (Revert to Default)"
+    read -p "Select an option [1-2]: " OPT_CHOICE
+    
+    if [ "$OPT_CHOICE" == "1" ]; then
+        echo "[*] Optimizing Chromium for Hardware Accelerated Video Decoding..."
+        proot-distro login "$DISTRO" -- bash -c '
 cat << EOF > /usr/local/bin/chromium
 #!/bin/bash
 /usr/bin/chromium --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --use-gl=egl "\$@" 2>/dev/null
@@ -216,10 +223,21 @@ cat << EOF > /usr/local/bin/chromium-browser
 EOF
 chmod +x /usr/local/bin/chromium-browser
 '
-    echo "========================================="
-    echo "Optimization complete!"
-    echo "Chromium will now render YouTube videos much smoother using VirGL!"
-    echo "========================================="
+        echo "========================================="
+        echo "Optimization complete! Chromium will now render using VirGL!"
+        echo "========================================="
+    elif [ "$OPT_CHOICE" == "2" ]; then
+        echo "[*] Removing Hardware Acceleration Overrides..."
+        proot-distro login "$DISTRO" -- bash -c '
+rm -f /usr/local/bin/chromium
+rm -f /usr/local/bin/chromium-browser
+'
+        echo "========================================="
+        echo "Hardware Acceleration disabled. Restored to default!"
+        echo "========================================="
+    else
+        echo "Invalid selection."
+    fi
     read -p "Press Enter to continue..."
     show_menu
 }
