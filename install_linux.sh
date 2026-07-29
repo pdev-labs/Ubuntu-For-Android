@@ -23,9 +23,10 @@ show_menu() {
     echo "8) Export Distro (Share to Downloads)"
     echo "9) Import Shared Distro"
     echo "10) Uninstall a Distro"
-    echo "11) Exit"
+    echo "11) Optimize Browser (Hardware Acceleration)"
+    echo "12) Exit"
     echo "========================================="
-    read -p "Select an option [1-11]: " OPTION
+    read -p "Select an option [1-12]: " OPTION
     case $OPTION in
         1) install_linux ;;
         2) update_linux ;;
@@ -37,7 +38,8 @@ show_menu() {
         8) export_distro ;;
         9) import_distro ;;
         10) uninstall_linux ;;
-        11) exit 0 ;;
+        11) optimize_browser ;;
+        12) exit 0 ;;
         *) echo "Invalid option"; sleep 1; show_menu ;;
     esac
 }
@@ -194,6 +196,30 @@ import_distro() {
             echo "========================================="
         fi
     fi
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+optimize_browser() {
+    get_distro_choice
+    echo "[*] Optimizing Chromium for Hardware Accelerated Video Decoding..."
+    proot-distro login "$DISTRO" -- bash -c '
+cat << EOF > /usr/local/bin/chromium
+#!/bin/bash
+/usr/bin/chromium --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --use-gl=egl "\$@" 2>/dev/null
+EOF
+chmod +x /usr/local/bin/chromium
+
+cat << EOF > /usr/local/bin/chromium-browser
+#!/bin/bash
+/usr/bin/chromium-browser --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --use-gl=egl "\$@" 2>/dev/null
+EOF
+chmod +x /usr/local/bin/chromium-browser
+'
+    echo "========================================="
+    echo "Optimization complete!"
+    echo "Chromium will now render YouTube videos much smoother using VirGL!"
+    echo "========================================="
     read -p "Press Enter to continue..."
     show_menu
 }
