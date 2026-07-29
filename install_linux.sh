@@ -304,28 +304,43 @@ install_linux() {
     echo "========================================="
     echo "      Software Selector (Optional)       "
     echo "========================================="
-    echo "Select categories to install popular apps:"
-    
-    INSTALL_DEV=0
-    INSTALL_WEB=0
-    INSTALL_OFFICE=0
-    INSTALL_MEDIA=0
-    INSTALL_UTILS=0
-    
-    read -p "Install Development Tools? (Python, Git, Node.js) [y/N]: " DEV_CHOICE
-    if [[ "$DEV_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_DEV=1; fi
-    
-    read -p "Install Web Browsers? (Firefox, Chromium) [y/N]: " WEB_CHOICE
-    if [[ "$WEB_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_WEB=1; fi
-    
-    read -p "Install Office Suite? (LibreOffice) [y/N]: " OFFICE_CHOICE
-    if [[ "$OFFICE_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_OFFICE=1; fi
-    
-    read -p "Install Media Tools? (VLC, GIMP) [y/N]: " MEDIA_CHOICE
-    if [[ "$MEDIA_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_MEDIA=1; fi
-    
-    read -p "Install System Utilities? (htop, neofetch) [y/N]: " UTILS_CHOICE
-    if [[ "$UTILS_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_UTILS=1; fi
+    echo "Development Tools:"
+    echo "  1) Python       2) Git         3) Node.js"
+    echo "  4) curl         5) wget        6) Google Antigravity IDE"
+    echo "Web Browsers:"
+    echo "  7) Firefox      8) Chromium"
+    echo "Office Suite:"
+    echo "  9) LibreOffice"
+    echo "Media Tools:"
+    echo " 10) VLC         11) GIMP"
+    echo "System Utilities:"
+    echo " 12) htop        13) neofetch"
+    echo "========================================="
+    echo "Enter numbers separated by spaces (e.g. 1 2 7 12), or press Enter to skip."
+    read -p "Selection: " APP_CHOICES
+
+    INSTALL_PYTHON=0; INSTALL_GIT=0; INSTALL_NODEJS=0; INSTALL_CURL=0; INSTALL_WGET=0; INSTALL_IDE=0
+    INSTALL_FIREFOX=0; INSTALL_CHROMIUM=0
+    INSTALL_LIBREOFFICE=0; INSTALL_VLC=0; INSTALL_GIMP=0
+    INSTALL_HTOP=0; INSTALL_NEOFETCH=0
+
+    for choice in $APP_CHOICES; do
+        case $choice in
+            1) INSTALL_PYTHON=1 ;;
+            2) INSTALL_GIT=1 ;;
+            3) INSTALL_NODEJS=1 ;;
+            4) INSTALL_CURL=1 ;;
+            5) INSTALL_WGET=1 ;;
+            6) INSTALL_IDE=1 ;;
+            7) INSTALL_FIREFOX=1 ;;
+            8) INSTALL_CHROMIUM=1 ;;
+            9) INSTALL_LIBREOFFICE=1 ;;
+            10) INSTALL_VLC=1 ;;
+            11) INSTALL_GIMP=1 ;;
+            12) INSTALL_HTOP=1 ;;
+            13) INSTALL_NEOFETCH=1 ;;
+        esac
+    done
     
     echo ""
     echo "========================================="
@@ -363,11 +378,19 @@ install_linux() {
             LXDE_PKG="lxde dbus-x11"
             VNC_PKG="tigervnc-standalone-server expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget nodejs"
-            WEB_PKG="firefox chromium-browser"
-            OFFICE_PKG="libreoffice"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
+            SELECTED_PKGS=""
+            if [ "$INSTALL_PYTHON" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS python3"; fi
+            if [ "$INSTALL_GIT" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS git"; fi
+            if [ "$INSTALL_NODEJS" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS nodejs"; fi
+            if [ "$INSTALL_CURL" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS curl"; fi
+            if [ "$INSTALL_WGET" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS wget"; fi
+            if [ "$INSTALL_FIREFOX" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS firefox"; fi
+            if [ "$INSTALL_CHROMIUM" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS chromium-browser"; fi
+            if [ "$INSTALL_LIBREOFFICE" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS libreoffice"; fi
+            if [ "$INSTALL_VLC" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS vlc"; fi
+            if [ "$INSTALL_GIMP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS gimp"; fi
+            if [ "$INSTALL_HTOP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS htop"; fi
+            if [ "$INSTALL_NEOFETCH" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS neofetch"; fi
             ;;
 
         archlinux)
@@ -377,11 +400,19 @@ install_linux() {
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python git curl wget nodejs"
-            WEB_PKG="firefox chromium"
-            OFFICE_PKG="libreoffice-fresh"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
+            SELECTED_PKGS=""
+            if [ "$INSTALL_PYTHON" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS python"; fi
+            if [ "$INSTALL_GIT" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS git"; fi
+            if [ "$INSTALL_NODEJS" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS nodejs"; fi
+            if [ "$INSTALL_CURL" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS curl"; fi
+            if [ "$INSTALL_WGET" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS wget"; fi
+            if [ "$INSTALL_FIREFOX" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS firefox"; fi
+            if [ "$INSTALL_CHROMIUM" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS chromium"; fi
+            if [ "$INSTALL_LIBREOFFICE" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS libreoffice-fresh"; fi
+            if [ "$INSTALL_VLC" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS vlc"; fi
+            if [ "$INSTALL_GIMP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS gimp"; fi
+            if [ "$INSTALL_HTOP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS htop"; fi
+            if [ "$INSTALL_NEOFETCH" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS neofetch"; fi
             ;;
         fedora)
             UPDATE_CMD="dnf update -y"
@@ -390,11 +421,19 @@ install_linux() {
             LXDE_PKG="lxde-common lxsession dbus-x11"
             VNC_PKG="tigervnc-server expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget nodejs"
-            WEB_PKG="firefox chromium"
-            OFFICE_PKG="libreoffice"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
+            SELECTED_PKGS=""
+            if [ "$INSTALL_PYTHON" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS python3"; fi
+            if [ "$INSTALL_GIT" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS git"; fi
+            if [ "$INSTALL_NODEJS" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS nodejs"; fi
+            if [ "$INSTALL_CURL" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS curl"; fi
+            if [ "$INSTALL_WGET" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS wget"; fi
+            if [ "$INSTALL_FIREFOX" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS firefox"; fi
+            if [ "$INSTALL_CHROMIUM" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS chromium"; fi
+            if [ "$INSTALL_LIBREOFFICE" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS libreoffice"; fi
+            if [ "$INSTALL_VLC" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS vlc"; fi
+            if [ "$INSTALL_GIMP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS gimp"; fi
+            if [ "$INSTALL_HTOP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS htop"; fi
+            if [ "$INSTALL_NEOFETCH" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS neofetch"; fi
             ;;
         opensuse)
             UPDATE_CMD="zypper refresh && zypper update -y"
@@ -403,11 +442,19 @@ install_linux() {
             LXDE_PKG="patterns-lxde-lxde dbus-1-x11"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget nodejs"
-            WEB_PKG="MozillaFirefox chromium"
-            OFFICE_PKG="libreoffice"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
+            SELECTED_PKGS=""
+            if [ "$INSTALL_PYTHON" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS python3"; fi
+            if [ "$INSTALL_GIT" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS git"; fi
+            if [ "$INSTALL_NODEJS" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS nodejs"; fi
+            if [ "$INSTALL_CURL" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS curl"; fi
+            if [ "$INSTALL_WGET" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS wget"; fi
+            if [ "$INSTALL_FIREFOX" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS MozillaFirefox"; fi
+            if [ "$INSTALL_CHROMIUM" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS chromium"; fi
+            if [ "$INSTALL_LIBREOFFICE" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS libreoffice"; fi
+            if [ "$INSTALL_VLC" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS vlc"; fi
+            if [ "$INSTALL_GIMP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS gimp"; fi
+            if [ "$INSTALL_HTOP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS htop"; fi
+            if [ "$INSTALL_NEOFETCH" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS neofetch"; fi
             ;;
         void)
             UPDATE_CMD="xbps-install -Syu"
@@ -416,11 +463,19 @@ install_linux() {
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget nodejs"
-            WEB_PKG="firefox chromium"
-            OFFICE_PKG="libreoffice"
-            MEDIA_PKG="vlc gimp"
-            UTILS_PKG="htop neofetch"
+            SELECTED_PKGS=""
+            if [ "$INSTALL_PYTHON" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS python3"; fi
+            if [ "$INSTALL_GIT" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS git"; fi
+            if [ "$INSTALL_NODEJS" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS nodejs"; fi
+            if [ "$INSTALL_CURL" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS curl"; fi
+            if [ "$INSTALL_WGET" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS wget"; fi
+            if [ "$INSTALL_FIREFOX" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS firefox"; fi
+            if [ "$INSTALL_CHROMIUM" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS chromium"; fi
+            if [ "$INSTALL_LIBREOFFICE" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS libreoffice"; fi
+            if [ "$INSTALL_VLC" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS vlc"; fi
+            if [ "$INSTALL_GIMP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS gimp"; fi
+            if [ "$INSTALL_HTOP" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS htop"; fi
+            if [ "$INSTALL_NEOFETCH" == "1" ]; then SELECTED_PKGS="$SELECTED_PKGS neofetch"; fi
             ;;
     esac
 
@@ -457,35 +512,11 @@ $INSTALL_CMD $APT_PKGS
 EOF
     fi
 
-    # Install optional categories safely
-    if [ "$INSTALL_DEV" == "1" ]; then
+    # Install optional applications safely
+    if [ -n "$SELECTED_PKGS" ]; then
         cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing Development Tools..."
-$INSTALL_CMD $DEV_PKG || true
-EOF
-    fi
-    if [ "$INSTALL_WEB" == "1" ]; then
-        cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing Web Browsers..."
-$INSTALL_CMD $WEB_PKG || true
-EOF
-    fi
-    if [ "$INSTALL_OFFICE" == "1" ]; then
-        cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing Office Suite..."
-$INSTALL_CMD $OFFICE_PKG || true
-EOF
-    fi
-    if [ "$INSTALL_MEDIA" == "1" ]; then
-        cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing Media Tools..."
-$INSTALL_CMD $MEDIA_PKG || true
-EOF
-    fi
-    if [ "$INSTALL_UTILS" == "1" ]; then
-        cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing System Utilities..."
-$INSTALL_CMD $UTILS_PKG || true
+echo " -> Installing Selected Applications..."
+$INSTALL_CMD $SELECTED_PKGS || true
 EOF
     fi
     
@@ -504,7 +535,7 @@ fi
 chown -R user:user /home/user/storage
 EOF
     
-    if [ "$INSTALL_DEV" == "1" ]; then
+    if [ "$INSTALL_IDE" == "1" ]; then
         cat << 'EOF' >> "$SETUP_SCRIPT"
 echo " -> Installing Google Antigravity IDE..."
 cat << 'IDE' > /usr/local/bin/antigravity-ide
