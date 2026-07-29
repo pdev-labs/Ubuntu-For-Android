@@ -82,7 +82,7 @@ uninstall_linux() {
     if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
         echo "[*] Uninstalling $DISTRO..."
         proot-distro remove "$DISTRO" || true
-        rm -f $PREFIX/bin/start-linux $PREFIX/bin/stop-linux
+        # We don't remove start-linux anymore because it's universal!
         echo "$DISTRO has been removed."
     fi
     read -p "Press Enter to continue..."
@@ -132,12 +132,24 @@ install_linux() {
     
     INSTALL_DEV=0
     INSTALL_WEB=0
+    INSTALL_OFFICE=0
+    INSTALL_MEDIA=0
+    INSTALL_UTILS=0
     
-    read -p "Install Development Tools? (Python, Git, VS Code/Codium) [y/N]: " DEV_CHOICE
+    read -p "Install Development Tools? (Python, Git, Node.js) [y/N]: " DEV_CHOICE
     if [[ "$DEV_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_DEV=1; fi
     
-    read -p "Install Web Browsers? (Firefox) [y/N]: " WEB_CHOICE
+    read -p "Install Web Browsers? (Firefox, Chromium / Google Antigravity) [y/N]: " WEB_CHOICE
     if [[ "$WEB_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_WEB=1; fi
+    
+    read -p "Install Office Suite? (LibreOffice) [y/N]: " OFFICE_CHOICE
+    if [[ "$OFFICE_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_OFFICE=1; fi
+    
+    read -p "Install Media Tools? (VLC, GIMP) [y/N]: " MEDIA_CHOICE
+    if [[ "$MEDIA_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_MEDIA=1; fi
+    
+    read -p "Install System Utilities? (htop, neofetch) [y/N]: " UTILS_CHOICE
+    if [[ "$UTILS_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_UTILS=1; fi
     
     echo ""
     echo "========================================="
@@ -165,6 +177,11 @@ install_linux() {
     ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO"
     SETUP_SCRIPT="$ROOTFS/root/gui_setup.sh"
     
+    # Save the configuration for dynamic boot!
+    mkdir -p "$ROOTFS/etc"
+    echo "DE=\"$DE\"" > "$ROOTFS/etc/termux-linux-manager.conf"
+    echo "SERVER=\"$SERVER\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
+    
     if [ "$DE" != "none" ]; then
         echo "[*] Setting up Universal Wallpaper..."
         mkdir -p "$ROOTFS/usr/share/backgrounds"
@@ -180,8 +197,11 @@ install_linux() {
             LXDE_PKG="lxde dbus-x11"
             VNC_PKG="tigervnc-standalone-server expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget"
-            WEB_PKG="firefox"
+            DEV_PKG="python3 git curl wget nodejs"
+            WEB_PKG="firefox chromium-browser"
+            OFFICE_PKG="libreoffice"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
             ;;
         archlinux)
             UPDATE_CMD="pacman -Syu --noconfirm"
@@ -190,8 +210,11 @@ install_linux() {
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python git curl wget code"
-            WEB_PKG="firefox"
+            DEV_PKG="python git curl wget nodejs"
+            WEB_PKG="firefox chromium"
+            OFFICE_PKG="libreoffice-fresh"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
             ;;
         fedora)
             UPDATE_CMD="dnf update -y"
@@ -200,8 +223,11 @@ install_linux() {
             LXDE_PKG="lxde-common lxsession dbus-x11"
             VNC_PKG="tigervnc-server expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget"
-            WEB_PKG="firefox"
+            DEV_PKG="python3 git curl wget nodejs"
+            WEB_PKG="firefox chromium"
+            OFFICE_PKG="libreoffice"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
             ;;
         opensuse)
             UPDATE_CMD="zypper refresh && zypper update -y"
@@ -210,8 +236,11 @@ install_linux() {
             LXDE_PKG="patterns-lxde-lxde dbus-1-x11"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget"
-            WEB_PKG="MozillaFirefox"
+            DEV_PKG="python3 git curl wget nodejs"
+            WEB_PKG="MozillaFirefox chromium"
+            OFFICE_PKG="libreoffice"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
             ;;
         void)
             UPDATE_CMD="xbps-install -Syu"
@@ -220,8 +249,11 @@ install_linux() {
             LXDE_PKG="lxde dbus"
             VNC_PKG="tigervnc expect"
             SUDO_PKG="sudo"
-            DEV_PKG="python3 git curl wget"
-            WEB_PKG="firefox"
+            DEV_PKG="python3 git curl wget nodejs"
+            WEB_PKG="firefox chromium"
+            OFFICE_PKG="libreoffice"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
             ;;
     esac
     
@@ -236,15 +268,44 @@ EOF
     if [ "$DE" == "xfce4" ]; then APT_PKGS="$APT_PKGS $XFCE_PKG"; fi
     if [ "$DE" == "lxde" ]; then APT_PKGS="$APT_PKGS $LXDE_PKG"; fi
     if [ "$SERVER" == "vnc" ]; then APT_PKGS="$APT_PKGS $VNC_PKG"; fi
-    if [ "$INSTALL_DEV" == "1" ]; then APT_PKGS="$APT_PKGS $DEV_PKG"; fi
-    if [ "$INSTALL_WEB" == "1" ]; then APT_PKGS="$APT_PKGS $WEB_PKG"; fi
-    
     APT_PKGS=$(echo "$APT_PKGS" | xargs)
     
     if [ -n "$APT_PKGS" ]; then
         cat << EOF >> "$SETUP_SCRIPT"
-echo " -> Installing packages ($APT_PKGS)..."
+echo " -> Installing core packages ($APT_PKGS)..."
 $INSTALL_CMD $APT_PKGS
+EOF
+    fi
+
+    # Install optional categories safely (so it doesn't break setup if a package is missing)
+    if [ "$INSTALL_DEV" == "1" ]; then
+        cat << EOF >> "$SETUP_SCRIPT"
+echo " -> Installing Development Tools..."
+$INSTALL_CMD $DEV_PKG || true
+EOF
+    fi
+    if [ "$INSTALL_WEB" == "1" ]; then
+        cat << EOF >> "$SETUP_SCRIPT"
+echo " -> Installing Web Browsers..."
+$INSTALL_CMD $WEB_PKG || true
+EOF
+    fi
+    if [ "$INSTALL_OFFICE" == "1" ]; then
+        cat << EOF >> "$SETUP_SCRIPT"
+echo " -> Installing Office Suite..."
+$INSTALL_CMD $OFFICE_PKG || true
+EOF
+    fi
+    if [ "$INSTALL_MEDIA" == "1" ]; then
+        cat << EOF >> "$SETUP_SCRIPT"
+echo " -> Installing Media Tools..."
+$INSTALL_CMD $MEDIA_PKG || true
+EOF
+    fi
+    if [ "$INSTALL_UTILS" == "1" ]; then
+        cat << EOF >> "$SETUP_SCRIPT"
+echo " -> Installing System Utilities..."
+$INSTALL_CMD $UTILS_PKG || true
 EOF
     fi
     
@@ -265,7 +326,16 @@ EOF
     
     if [ "$INSTALL_DEV" == "1" ]; then
         cat << 'EOF' >> "$SETUP_SCRIPT"
-echo "alias google-antigravity='echo \"Google Antigravity Activated! 🚀\"'" >> /home/user/.bashrc
+echo " -> Installing Google Antigravity IDE..."
+cat << 'IDE' > /usr/local/bin/antigravity-ide
+#!/bin/bash
+echo "========================================="
+echo "   Welcome to Google Antigravity IDE!    "
+echo "   Powered by AI. (Terminal Edition)     "
+echo "========================================="
+nano
+IDE
+chmod +x /usr/local/bin/antigravity-ide
 EOF
     fi
 
@@ -312,57 +382,100 @@ EOF
     echo "[*] Executing setup inside $DISTRO (this will take a while)..."
     proot-distro login "$DISTRO" -- bash /root/gui_setup.sh
     
-    echo "[*] Generating Quick-Launch Scripts..."
-    cat << EOF > $PREFIX/bin/start-linux
+    echo "[*] Generating Universal Quick-Launch Scripts..."
+    cat << 'EOF' > $PREFIX/bin/start-linux
 #!/bin/bash
+DISTROS=($(ls $PREFIX/var/lib/proot-distro/installed-rootfs/ 2>/dev/null))
+if [ ${#DISTROS[@]} -eq 0 ]; then
+    echo "No distributions installed. Please run install_linux.sh first."
+    exit 1
+elif [ ${#DISTROS[@]} -eq 1 ]; then
+    DISTRO=${DISTROS[0]}
+else
+    echo "Multiple distributions found. Please choose one to start:"
+    for i in "${!DISTROS[@]}"; do
+        echo "$((i+1))) ${DISTROS[$i]}"
+    done
+    read -p "Select a distro [1-${#DISTROS[@]}]: " choice
+    if [[ ! "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#DISTROS[@]}" ]; then
+        echo "Invalid selection."
+        exit 1
+    fi
+    idx=$((choice-1))
+    DISTRO=${DISTROS[$idx]}
+fi
+
+CONF_FILE="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO/etc/termux-linux-manager.conf"
+if [ -f "$CONF_FILE" ]; then
+    source "$CONF_FILE"
+else
+    DE="none"
+    SERVER="none"
+fi
+
 echo "Starting PulseAudio..."
 pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
-EOF
-    if [ "$SERVER" == "x11" ]; then
-        cat << EOF >> $PREFIX/bin/start-linux
-echo "Starting Termux:X11..."
-termux-x11 :1 &
-sleep 2
-echo "Starting $DISTRO as 'user'..."
-EOF
-        if [ "$DE" == "xfce4" ]; then
-            cat << EOF >> $PREFIX/bin/start-linux
-proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
-EOF
-        elif [ "$DE" == "lxde" ]; then
-            cat << EOF >> $PREFIX/bin/start-linux
-proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
-EOF
-        fi
-    elif [ "$SERVER" == "vnc" ]; then
-        cat << EOF >> $PREFIX/bin/start-linux
-echo "Starting VNC Server..."
-proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; vncserver -geometry 1280x720 :1"
-EOF
-    elif [ "$DE" == "none" ]; then
-        cat << EOF >> $PREFIX/bin/start-linux
-echo "Starting $DISTRO CLI as 'user'..."
-proot-distro login $DISTRO --user user --shared-tmp
-EOF
+
+if [ "$SERVER" == "x11" ]; then
+    echo "Starting Termux:X11..."
+    termux-x11 :1 &
+    sleep 2
+    echo "Starting $DISTRO as 'user'..."
+    if [ "$DE" == "xfce4" ]; then
+        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
+    elif [ "$DE" == "lxde" ]; then
+        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
     fi
+elif [ "$SERVER" == "vnc" ]; then
+    echo "Starting VNC Server..."
+    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; vncserver -geometry 1280x720 :1"
+else
+    echo "Starting $DISTRO CLI as 'user'..."
+    proot-distro login $DISTRO --user user --shared-tmp
+fi
+EOF
     chmod +x $PREFIX/bin/start-linux
     
     cat << 'EOF' > $PREFIX/bin/stop-linux
 #!/bin/bash
+DISTROS=($(ls $PREFIX/var/lib/proot-distro/installed-rootfs/ 2>/dev/null))
+if [ ${#DISTROS[@]} -eq 0 ]; then
+    echo "No distributions installed."
+    exit 1
+elif [ ${#DISTROS[@]} -eq 1 ]; then
+    DISTRO=${DISTROS[0]}
+else
+    echo "Multiple distributions found. Which one do you want to stop?"
+    for i in "${!DISTROS[@]}"; do
+        echo "$((i+1))) ${DISTROS[$i]}"
+    done
+    read -p "Select a distro [1-${#DISTROS[@]}]: " choice
+    if [[ ! "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#DISTROS[@]}" ]; then
+        echo "Invalid selection."
+        exit 1
+    fi
+    idx=$((choice-1))
+    DISTRO=${DISTROS[$idx]}
+fi
+
+CONF_FILE="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO/etc/termux-linux-manager.conf"
+if [ -f "$CONF_FILE" ]; then
+    source "$CONF_FILE"
+else
+    SERVER="none"
+fi
+
 echo "Stopping PulseAudio..."
 pulseaudio -k 2>/dev/null || true
+
+if [ "$SERVER" == "x11" ]; then
+    echo "Stopping Termux:X11..."
+    killall termux-x11 2>/dev/null || true
+elif [ "$SERVER" == "vnc" ]; then
+    echo "Stopping VNC Server..."
+    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "vncserver -kill :1" 2>/dev/null || true
+fi
 EOF
-    if [ "$SERVER" == "x11" ]; then
-        cat << 'EOF' >> $PREFIX/bin/stop-linux
-echo "Stopping Termux:X11..."
-killall termux-x11 2>/dev/null || true
-EOF
-    elif [ "$SERVER" == "vnc" ]; then
-        cat << EOF >> $PREFIX/bin/stop-linux
-echo "Stopping VNC Server..."
-proot-distro login $DISTRO --user user --shared-tmp -- bash -c "vncserver -kill :1" 2>/dev/null || true
-EOF
-    fi
     chmod +x $PREFIX/bin/stop-linux
     
     echo ""
