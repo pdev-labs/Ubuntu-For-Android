@@ -27,6 +27,7 @@ Currently supported distributions:
 - **Ubuntu** (apt)
 - **Debian** (apt)
 - **Kali Linux** (apt)
+- **Arch Linux** (pacman)
 - **Fedora** (dnf)
 - **OpenSUSE** (zypper)
 - **Void Linux** (xbps)

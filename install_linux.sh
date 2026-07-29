@@ -51,7 +51,8 @@ get_distro_choice() {
     echo "4) Fedora (dnf)"
     echo "5) OpenSUSE (zypper)"
     echo "6) Void Linux (xbps)"
-    read -p "Select Distro [1-6]: " DIST_CHOICE
+    echo "7) Arch Linux (pacman) [May be unstable on ARM64]"
+    read -p "Select Distro [1-7]: " DIST_CHOICE
     case $DIST_CHOICE in
         1) DISTRO="ubuntu";;
         2) DISTRO="debian";;
@@ -59,6 +60,7 @@ get_distro_choice() {
         4) DISTRO="fedora";;
         5) DISTRO="opensuse";;
         6) DISTRO="void";;
+        7) DISTRO="archlinux";;
         *) echo "Invalid choice"; exit 1 ;;
     esac
 }
@@ -323,6 +325,19 @@ install_linux() {
             UTILS_PKG="htop neofetch"
             ;;
 
+        archlinux)
+            UPDATE_CMD="pacman -Syu --noconfirm"
+            INSTALL_CMD="pacman -S --noconfirm"
+            XFCE_PKG="xfce4 xfce4-goodies dbus"
+            LXDE_PKG="lxde dbus"
+            VNC_PKG="tigervnc expect"
+            SUDO_PKG="sudo"
+            DEV_PKG="python git curl wget nodejs"
+            WEB_PKG="firefox chromium"
+            OFFICE_PKG="libreoffice-fresh"
+            MEDIA_PKG="vlc gimp"
+            UTILS_PKG="htop neofetch"
+            ;;
         fedora)
             UPDATE_CMD="dnf update -y"
             INSTALL_CMD="dnf install -y"
