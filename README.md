@@ -1,17 +1,16 @@
 # Linux for Android (Termux) Manager
 
-A fully automated, interactive bash script to install, manage, backup, and configure **Ubuntu, Debian, Arch Linux, Fedora, OpenSUSE, or Void Linux** on Android using Termux and `proot-distro`.
+A fully automated, interactive bash script to install, manage, backup, update, and configure **Ubuntu, Debian, Arch Linux, Fedora, OpenSUSE, or Void Linux** on Android using Termux and `proot-distro`.
 
-## Advanced Features
+## The Ultimate Features
 - **Multi-Distribution Support:** Choose your favorite flavor of Linux! The script automatically handles the different package managers (apt, pacman, dnf, zypper, xbps).
 - **True Linux Experience (Sudo):** Unlike standard Termux environments, this installer sets up a proper non-root user (`user`) with `sudo` privileges. You must use `sudo` to install packages, just like a real PC!
-- **Software Selector:** Easily select optional software categories (like Development tools or Web browsers) during installation.
+- **VirGL Hardware Acceleration:** Automatically installs and starts `virglrenderer-android`, passing 3D OpenGL rendering directly to your phone's physical GPU for incredibly smooth graphics.
+- **Home-Screen Widgets:** Automatically generates a `Start-Linux` shortcut. If you use the `Termux:Widget` Android app, you can launch your Linux desktop with one tap straight from your phone's home screen!
+- **1-Click Universal Updater:** Never type `apt update` again! The Manager Menu includes an option to automatically detect your distro and update it in the background.
+- **Instant SSH Server:** Start a native SSH server on port 8022 directly from the Manager Menu, allowing you to seamlessly remote into your phone from your PC.
 - **Hardware Acceleration (Termux:X11):** Offers a choice between VNC (software rendering) and Termux:X11 for a much smoother, hardware-accelerated desktop experience.
 - **Audio Support:** Automatically installs and configures PulseAudio so you can hear sound from your Linux environment.
-- **Quick-Launch Commands:** Automatically generates `start-linux` and `stop-linux` commands. You can type them anywhere in Termux to boot up or shut down your desktop!
-- **Backup & Restore:** Built-in menu options to backup your entire Linux system to your internal storage, and restore it later.
-- **Uninstaller:** Easily delete the Linux environment to free up space with a single button.
-- **SD Card Access:** Automatically links your phone's internal storage directly into `~/storage` in Linux.
 
 ## Installation
 
@@ -27,16 +26,14 @@ A fully automated, interactive bash script to install, manage, backup, and confi
 
 ## Usage
 
-When you run `./install_linux.sh`, it will launch a Manager Menu where you can Install, Backup, Restore, or Uninstall any supported distribution.
-
-After you have installed Linux through the manager, you never have to run the long startup commands manually again.
+When you run `./install_linux.sh`, it will launch a Manager Menu where you can Install, Update, SSH, Backup, Restore, or Uninstall any supported distribution.
 
 **To Start Linux:**
 Just type this anywhere in Termux:
 ```bash
 start-linux
 ```
-*(Then, open your VNC Viewer or Termux:X11 app depending on what you chose during installation).*
+*(If you installed multiple OSs, it will automatically pop up a menu asking which one you want to boot!)*
 
 **Default Credentials:**
 - **Username:** `user`

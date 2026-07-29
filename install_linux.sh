@@ -14,18 +14,22 @@ show_menu() {
     echo "        Linux for Termux Manager         "
     echo "========================================="
     echo "1) Install / Re-install Linux Distro"
-    echo "2) Backup a Distro"
-    echo "3) Restore a Distro"
-    echo "4) Uninstall a Distro"
-    echo "5) Exit"
+    echo "2) Update a Distro (1-Click Updater)"
+    echo "3) Start SSH Server"
+    echo "4) Backup a Distro"
+    echo "5) Restore a Distro"
+    echo "6) Uninstall a Distro"
+    echo "7) Exit"
     echo "========================================="
-    read -p "Select an option [1-5]: " OPTION
+    read -p "Select an option [1-7]: " OPTION
     case $OPTION in
         1) install_linux ;;
-        2) backup_linux ;;
-        3) restore_linux ;;
-        4) uninstall_linux ;;
-        5) exit 0 ;;
+        2) update_linux ;;
+        3) start_ssh ;;
+        4) backup_linux ;;
+        5) restore_linux ;;
+        6) uninstall_linux ;;
+        7) exit 0 ;;
         *) echo "Invalid option"; sleep 1; show_menu ;;
     esac
 }
@@ -49,6 +53,42 @@ get_distro_choice() {
         6) DISTRO="void";;
         *) echo "Invalid choice"; exit 1 ;;
     esac
+}
+
+update_linux() {
+    get_distro_choice
+    CONF_FILE="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO/etc/termux-linux-manager.conf"
+    if [ ! -f "$CONF_FILE" ]; then
+        echo "Error: Distro not installed or missing configuration file."
+    else
+        source "$CONF_FILE"
+        echo "[*] Updating $DISTRO..."
+        proot-distro login "$DISTRO" --user root -- bash -c "export DEBIAN_FRONTEND=noninteractive; $UPDATE_CMD"
+        echo "========================================="
+        echo "Update complete!"
+        echo "========================================="
+    fi
+    read -p "Press Enter to continue..."
+    show_menu
+}
+
+start_ssh() {
+    echo "[*] Starting Termux SSH Server..."
+    pkg install openssh -y
+    sshd
+    IP=$(ifconfig 2>/dev/null | grep -E 'inet .*broadcast' | awk '{print $2}' | head -n 1)
+    if [ -z "$IP" ]; then IP=$(ifconfig 2>/dev/null | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | head -n 1); fi
+    if [ -z "$IP" ]; then IP="YOUR_PHONE_IP"; fi
+    echo "========================================="
+    echo "SSH Server is running!"
+    echo "To connect from your PC, run this command in your PC's terminal:"
+    echo ""
+    echo "   ssh $(whoami)@$IP -p 8022"
+    echo ""
+    echo "Note: If you have never set a Termux password, type 'passwd' right now to create one."
+    echo "========================================="
+    read -p "Press Enter to continue..."
+    show_menu
 }
 
 backup_linux() {
@@ -82,7 +122,6 @@ uninstall_linux() {
     if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
         echo "[*] Uninstalling $DISTRO..."
         proot-distro remove "$DISTRO" || true
-        # We don't remove start-linux anymore because it's universal!
         echo "$DISTRO has been removed."
     fi
     read -p "Press Enter to continue..."
@@ -139,7 +178,7 @@ install_linux() {
     read -p "Install Development Tools? (Python, Git, Node.js) [y/N]: " DEV_CHOICE
     if [[ "$DEV_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_DEV=1; fi
     
-    read -p "Install Web Browsers? (Firefox, Chromium / Google Antigravity) [y/N]: " WEB_CHOICE
+    read -p "Install Web Browsers? (Firefox, Chromium) [y/N]: " WEB_CHOICE
     if [[ "$WEB_CHOICE" =~ ^[Yy]$ ]]; then INSTALL_WEB=1; fi
     
     read -p "Install Office Suite? (LibreOffice) [y/N]: " OFFICE_CHOICE
@@ -164,7 +203,7 @@ install_linux() {
     pkg update -y && pkg upgrade -y
     
     echo "[*] Installing dependencies..."
-    pkg install proot-distro pulseaudio wget -y
+    pkg install proot-distro pulseaudio wget virglrenderer-android -y
     
     if [ "$SERVER" == "x11" ]; then
         pkg install x11-repo -y
@@ -176,17 +215,6 @@ install_linux() {
     
     ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO"
     SETUP_SCRIPT="$ROOTFS/root/gui_setup.sh"
-    
-    # Save the configuration for dynamic boot!
-    mkdir -p "$ROOTFS/etc"
-    echo "DE=\"$DE\"" > "$ROOTFS/etc/termux-linux-manager.conf"
-    echo "SERVER=\"$SERVER\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
-    
-    if [ "$DE" != "none" ]; then
-        echo "[*] Setting up Universal Wallpaper..."
-        mkdir -p "$ROOTFS/usr/share/backgrounds"
-        wget -qO "$ROOTFS/usr/share/backgrounds/default.jpg" "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ubuntu_10.04_LTS_default_wallpaper.jpg/1280px-Ubuntu_10.04_LTS_default_wallpaper.jpg" || true
-    fi
     
     # Configure package manager mapping
     case "$DISTRO" in
@@ -256,6 +284,18 @@ install_linux() {
             UTILS_PKG="htop neofetch"
             ;;
     esac
+
+    # Save the configuration for dynamic boot!
+    mkdir -p "$ROOTFS/etc"
+    echo "DE=\"$DE\"" > "$ROOTFS/etc/termux-linux-manager.conf"
+    echo "SERVER=\"$SERVER\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
+    echo "UPDATE_CMD=\"$UPDATE_CMD\"" >> "$ROOTFS/etc/termux-linux-manager.conf"
+    
+    if [ "$DE" != "none" ]; then
+        echo "[*] Setting up Universal Wallpaper..."
+        mkdir -p "$ROOTFS/usr/share/backgrounds"
+        wget -qO "$ROOTFS/usr/share/backgrounds/default.jpg" "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Ubuntu_10.04_LTS_default_wallpaper.jpg/1280px-Ubuntu_10.04_LTS_default_wallpaper.jpg" || true
+    fi
     
     cat << EOF > "$SETUP_SCRIPT"
 #!/bin/bash
@@ -382,6 +422,14 @@ EOF
     echo "[*] Executing setup inside $DISTRO (this will take a while)..."
     proot-distro login "$DISTRO" -- bash /root/gui_setup.sh
     
+    echo "[*] Setting up Home-Screen Widget Integration..."
+    mkdir -p ~/.shortcuts
+    cat << 'EOF' > ~/.shortcuts/Start-Linux
+#!/bin/bash
+start-linux
+EOF
+    chmod +x ~/.shortcuts/Start-Linux
+    
     echo "[*] Generating Universal Quick-Launch Scripts..."
     cat << 'EOF' > $PREFIX/bin/start-linux
 #!/bin/bash
@@ -416,19 +464,22 @@ fi
 echo "Starting PulseAudio..."
 pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
 
+echo "Starting VirGL Server..."
+virgl_test_server_android &
+
 if [ "$SERVER" == "x11" ]; then
     echo "Starting Termux:X11..."
     termux-x11 :1 &
     sleep 2
     echo "Starting $DISTRO as 'user'..."
     if [ "$DE" == "xfce4" ]; then
-        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
+        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; export GALLIUM_DRIVER=virpipe; export MESA_GL_VERSION_OVERRIDE=4.0; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/default.jpg || true) &"
     elif [ "$DE" == "lxde" ]; then
-        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
+        proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; export GALLIUM_DRIVER=virpipe; export MESA_GL_VERSION_OVERRIDE=4.0; startlxde & (sleep 5 && pcmanfm --set-wallpaper /usr/share/backgrounds/default.jpg || true) &"
     fi
 elif [ "$SERVER" == "vnc" ]; then
     echo "Starting VNC Server..."
-    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; vncserver -geometry 1280x720 :1"
+    proot-distro login $DISTRO --user user --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export GALLIUM_DRIVER=virpipe; export MESA_GL_VERSION_OVERRIDE=4.0; vncserver -geometry 1280x720 :1"
 else
     echo "Starting $DISTRO CLI as 'user'..."
     proot-distro login $DISTRO --user user --shared-tmp
@@ -468,6 +519,9 @@ fi
 echo "Stopping PulseAudio..."
 pulseaudio -k 2>/dev/null || true
 
+echo "Stopping VirGL Server..."
+killall virgl_test_server_android 2>/dev/null || true
+
 if [ "$SERVER" == "x11" ]; then
     echo "Stopping Termux:X11..."
     killall termux-x11 2>/dev/null || true
@@ -484,6 +538,7 @@ EOF
     echo "You are now running as a standard user."
     echo "Password for sudo is: ubuntu"
     echo "Use commands: start-linux / stop-linux"
+    echo "If you installed the Termux:Widget app, a shortcut is on your home screen!"
     echo "========================================="
     read -p "Press Enter to return to menu..."
     show_menu
