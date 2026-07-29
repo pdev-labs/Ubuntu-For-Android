@@ -236,8 +236,16 @@ echo "Starting Termux:X11..."
 termux-x11 :1 &
 sleep 2
 echo "Starting Ubuntu..."
+EOF
+        if [ "$DE" == "xfce4" ]; then
+            cat << 'EOF' >> $PREFIX/bin/start-ubuntu
+proot-distro login ubuntu --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; startxfce4 & (sleep 5 && xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/warty-final-ubuntu.png) &"
+EOF
+        elif [ "$DE" != "none" ]; then
+            cat << EOF >> $PREFIX/bin/start-ubuntu
 proot-distro login ubuntu --shared-tmp -- bash -c "export PULSE_SERVER=127.0.0.1; export DISPLAY=:1; start${DE} &"
 EOF
+        fi
     elif [ "$SERVER" == "vnc" ]; then
         cat << 'EOF' >> $PREFIX/bin/start-ubuntu
 echo "Starting VNC Server..."
